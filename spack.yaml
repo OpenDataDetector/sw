@@ -1,0 +1,49 @@
+# This is a Spack Environment file.
+#
+# It describes a set of packages to be installed, along with
+# configuration settings.
+spack:
+  # add package specs to the `specs` list
+  specs: 
+    - |
+      colliderml.acts@41.0.0
+        +dd4hep 
+        +geant4 
+        +tgeo 
+        +hepmc3 
+        +pythia8 
+        +edm4hep 
+        +podio 
+        +examples 
+        +python 
+        +json
+        +fatras
+      ^ root -opengl -x
+    - colliderml.dd4hep
+    - hepmc3@3.3.1
+    - madgraph5amc
+  view: true
+  concretizer:
+    unify: true
+
+  repos:
+    colliderml: spack_repo/colliderml
+
+  mirrors:
+    cache:
+      url: oci://ghcr.io/OpenDataDetector/sw
+      signed: false
+      access_pair:
+        id_variable: GH_OCI_USER
+        secret_variable: GH_OCI_TOKEN
+
+  config:
+    template_dirs:
+      - .
+
+  container:
+    images:
+      os: "ubuntu:24.04"
+      spack: develop
+    format: docker
+    template: Dockerfile.jinja2

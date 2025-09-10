@@ -1,0 +1,8 @@
+{% extends "container/Dockerfile" %}
+{% block build_stage %}
+COPY spack_repo /opt/spack-environment/spack_repo
+{{ super() }}
+{% endblock %}
+{% block final_stage %}
+{{ super() }}
+{% endblock %}
