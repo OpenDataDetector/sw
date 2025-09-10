@@ -6,22 +6,21 @@ spack:
   # add package specs to the `specs` list
   specs: 
     - |
-      colliderml.acts@41.0.0
-        +dd4hep 
-        +geant4 
-        +tgeo 
-        +hepmc3 
-        +pythia8 
-        +edm4hep 
-        +podio 
-        +examples 
-        +python 
-        +json
-        +fatras
-      ^ root -opengl -x
+       colliderml.acts@43.2.0
+         +dd4hep 
+         +geant4 
+         +tgeo 
+         +hepmc3 
+         +pythia8 
+         +edm4hep 
+         +podio 
+         +examples 
+         +python 
+         +json
+         +fatras
+       ^ root -opengl -x -davix
     - colliderml.dd4hep
-    - hepmc3@3.3.1
-    - madgraph5amc
+    - madgraph5amc ^colliderml.syscalc
   view: true
   concretizer:
     unify: true

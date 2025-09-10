@@ -33,6 +33,7 @@ class Acts(CMakePackage, CudaPackage):
 
     homepage = "https://acts.web.cern.ch/ACTS/"
     git = "https://github.com/acts-project/acts.git"
+    url = "https://github.com/acts-project/acts/releases/download/v43.2.0/acts-v43.2.0.tar.gz"
     list_url = "https://github.com/acts-project/acts/releases/"
     maintainers("wdconinc", "stephenswat")
 
@@ -43,10 +44,13 @@ class Acts(CMakePackage, CudaPackage):
     # Supported Acts versions
     version("main", branch="main")
     version("master", branch="main", deprecated=True)  # For compatibility
-    version("41.0.0", tag="v40.0.0", submodules=True)
-    version("40.1.0", tag="v40.1.0", submodules=True)
-    version("40.0.0", tag="v40.0.0", submodules=True)
-    version("39.2.1", tag="v39.2.1", submodules=True)
+
+    version("43.2.0", sha256="d237c106a22e2682b0ec028e6d5a155fb70f4528600f037e45e249f3e69977c8")
+    version("43.1.0", sha256="21b7586dcda1bb3e6982fd7e1fe949f95c9545d4e557b4ab78d2fe511c9fd185")
+    version("43.0.0", sha256="c5529a421b78384af8fc503060d73c10b813b8e902368ffc7b6265af46a33a05")
+    version("43.0.1", sha256="5ba2ffbd2b6fd2f91e3978ee0d1cda830f701d864f69c459a310c07461b407d9")
+    version("43.0.0", sha256="c5529a421b78384af8fc503060d73c10b813b8e902368ffc7b6265af46a33a05")
+
     version("39.2.0", commit="94cf48783efd713f38106b18211d1c59f4e8cdec", submodules=True)
     version("39.1.0", commit="09225b0d0bba24d57a696e347e3027b39404bb75", submodules=True)
     version("39.0.0", commit="b055202e2fbdd509bc186eb4782714bc46f38f3f", submodules=True)
@@ -112,7 +116,6 @@ class Acts(CMakePackage, CudaPackage):
     variant("traccc", default=False, description="Build the Traccc plugin")
 
     # Variants that only affect Acts examples for now
-    variant("edm4hep", default=False, description="Build the EDM4hep examples")
     variant(
         "geant4", default=False, description="Build the Geant4-based examples", when="+examples"
     )
@@ -155,7 +158,7 @@ class Acts(CMakePackage, CudaPackage):
     depends_on("geant4", when="+fatras_geant4")
     depends_on("geant4", when="+geant4")
     depends_on("geomodel +geomodelg4", when="+geomodel")
-    depends_on("geomodel @6.3.0:", when="+geomodel")
+    depends_on("geomodel @6.8.0:", when="+geomodel")
     depends_on("git-lfs", when="@12.0.0:")
     depends_on("gperftools", when="+profilecpu")
     depends_on("gperftools", when="+profilemem")

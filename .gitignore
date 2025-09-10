@@ -1,0 +1,4 @@
+/.spack-env
+*.pyc
+.DS_Store
+/spack.lock
