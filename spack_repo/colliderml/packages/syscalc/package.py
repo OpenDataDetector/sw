@@ -29,6 +29,7 @@ class Syscalc(CMakePackage):
     tags = ["hep"]
 
     depends_on("lhapdf@6:")
+    depends_on("tinyxml2")
 
     def url_for_version(self, version):
         url = self.url.rsplit("/", 1)[0]
