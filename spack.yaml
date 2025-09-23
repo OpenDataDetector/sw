@@ -6,7 +6,7 @@ spack:
   # add package specs to the `specs` list
   specs: 
     - |
-       colliderml.acts@43.2.0
+       colliderml.acts@develop
          +dd4hep 
          +geant4 
          +tgeo 

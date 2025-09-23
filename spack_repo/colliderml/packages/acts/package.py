@@ -32,7 +32,7 @@ class Acts(CMakePackage, CudaPackage):
     """
 
     homepage = "https://acts.web.cern.ch/ACTS/"
-    git = "https://github.com/acts-project/acts.git"
+    git = "https://github.com/paulgessinger/acts.git"
     url = "https://github.com/acts-project/acts/releases/download/v43.2.0/acts-v43.2.0.tar.gz"
     list_url = "https://github.com/acts-project/acts/releases/"
     maintainers("wdconinc", "stephenswat")
@@ -43,6 +43,11 @@ class Acts(CMakePackage, CudaPackage):
 
     # Supported Acts versions
     version("main", branch="main")
+
+    # This can point at our dev branch, but we need to label it `develop` so
+    # it's considered higher than the numeric versions
+    version("develop", branch="colliderml")
+
     version("master", branch="main", deprecated=True)  # For compatibility
 
     version("43.2.0", sha256="d237c106a22e2682b0ec028e6d5a155fb70f4528600f037e45e249f3e69977c8")
