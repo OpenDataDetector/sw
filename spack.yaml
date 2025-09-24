@@ -20,7 +20,7 @@ spack:
          +fatras
        ^ root -opengl -x -davix
     - colliderml.dd4hep
-    - madgraph5amc ^colliderml.syscalc
+    - madgraph5amc@3.5.9 +ninja +collier ^colliderml.syscalc
   view: true
   concretizer:
     unify: true
