@@ -51,7 +51,7 @@ spack:
     - fastjet@3.5.0 plugins=cxx
 
     - madgraph5amc@3.5.9 +ninja +collier +pythia8
-    - lhapdfsets sets=MMHT2014lo68cl,MMHT2014nlo68cl,CT14lo,CT14nlo,NNPDF23_nlo_as_0119_qed
+    - colliderml.lhapdfsets sets=MMHT2014lo68cl,MMHT2014nlo68cl,CT14lo,CT14nlo,NNPDF23_nlo_as_0119_qed
 
   view: true
   concretizer:
