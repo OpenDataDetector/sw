@@ -53,9 +53,9 @@ jobs:
             -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
             -e "GITHUB_ENV=/github_env" \
             -e "GITHUB_ACTIONS=${GITHUB_ACTIONS}" \
-            -w /build \
+            -w /src \
             ${{ env.IMAGE }} \
-            /src/spack_build.sh
+            /src/ci/spack_build.sh
 
 
       - name: Print base image
@@ -102,9 +102,9 @@ jobs:
             -e "GH_OCI_USER=${{ github.actor }}" \
             -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
             -e "BASE_IMAGE=${{ env.IMAGE }}" \
-            -w /build \
+            -w /src \
             ${{ env.IMAGE }} \
-            /src/spack_push.sh
+            /src/ci/spack_push.sh
 
 
   # build_docker:
