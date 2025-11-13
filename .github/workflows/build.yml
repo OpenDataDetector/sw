@@ -91,7 +91,7 @@ jobs:
       #       spack_*.lock
 
       - name: Push spack cache (container)
-        if: "inputs.image != '' && !cancelled()"
+        if: "!cancelled()"
         run: |
           docker run \
             -v"$PWD:/src" \
