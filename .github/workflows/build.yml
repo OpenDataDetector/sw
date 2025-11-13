@@ -1,5 +1,16 @@
 name: Build dependencies
 
+on:
+  push:
+    tags:
+      - '*'
+    branches:
+      - 'main'
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "5 4 * * *"
+
 jobs:
 
   build:
