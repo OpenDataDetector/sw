@@ -1,0 +1,161 @@
+name: Build dependencies
+
+jobs:
+
+  build:
+    runs-on: "${{ inputs.os }}"
+
+    env:
+      IMAGE: "ghcr.io/acts-project/ubuntu2404:82"
+      COMPILER: "gcc@13.3.0"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Spack
+        uses: spack/setup-spack@v2
+
+      - name: Remove packages to save disk
+        if: startsWith(inputs.os, 'ubuntu')
+        run: |
+          df -h
+          sudo apt-get update
+          echo "Removing large packages"
+          ci/uninstall_packages.py
+          df -h
+      #
+      # - name: Install the latest version of uv
+      #   uses: astral-sh/setup-uv@v5
+
+      - name: Run spack build (container)
+        run: |
+          mkdir build
+          docker run \
+            -v"$PWD:/src" \
+            -v"$(spack location -r):/spack" \
+            -v"$PWD/build:/build" \
+            -v "$GITHUB_ENV:/github_env"\
+            -e "SPACK_ROOT=/spack" \
+            -e "COMPILER=${{ env.COMPILER }}" \
+            -e "COMPILER_PATH=" \
+            -e "GH_OCI_USER=${{ github.actor }}" \
+            -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
+            -e "GITHUB_ENV=/github_env" \
+            -e "GITHUB_ACTIONS=${GITHUB_ACTIONS}" \
+            -w /build \
+            ${{ env.IMAGE }} \
+            /src/spack_build.sh
+
+
+      - name: Print base image
+        shell: bash
+        if: "!cancelled()"
+        run: |
+          echo "BASE IMAGE: ${BASE_IMAGE}"
+
+      # - name: Create Dockerfile from spack lockfile
+      #   if: "inputs.image != '' && !cancelled()"
+      #   run: |
+      #     uv run lockfile_to_docker.py \
+      #       "spack_${TARGET_TRIPLET}.lock" \
+      #       --base-image ${BASE_IMAGE} \
+      #       -o Dockerfile.${TARGET_TRIPLET}
+
+      - name: Upload lock files and Dockerfiles
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spack_${{ env.TARGET_TRIPLET }}-locks
+          path: |
+            spack_*.lock
+            Dockerfile.*
+          if-no-files-found: error
+
+      # - name: Add lock files and Dockerfiles to release
+      #   uses: softprops/action-gh-release@v2
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   with:
+      #     files: |
+      #       Dockerfile.*
+      #       spack_*.lock
+
+      - name: Push spack cache (container)
+        if: "inputs.image != '' && !cancelled()"
+        run: |
+          docker run \
+            -v"$PWD:/src" \
+            -v"$(spack location -r):/spack" \
+            -v"$PWD/build:/build" \
+            -e "SPACK_ROOT=/spack" \
+            -e "GITHUB_ACTIONS=${GITHUB_ACTIONS}" \
+            -e "GH_OCI_USER=${{ github.actor }}" \
+            -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
+            -e "BASE_IMAGE=${{ env.IMAGE }}" \
+            -w /build \
+            ${{ env.IMAGE }} \
+            /src/spack_push.sh
+
+
+  # build_docker:
+  #   if: "inputs.image != ''"
+  #   runs-on: "${{ inputs.os }}"
+  #   needs: [build]
+  #
+  #   env:
+  #     TARGET_ARCH: ${{ needs.build.outputs.target_arch }}
+  #     TARGET_TRIPLET: ${{ needs.build.outputs.target_triplet }}
+  #     TARGET_TRIPLET_SLUG: ${{ needs.build.outputs.target_triplet_slug }}
+  #
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Remove packages to save disk
+  #       if: startsWith(inputs.os, 'ubuntu')
+  #       run: |
+  #         df -h
+  #         sudo apt-get update
+  #         echo "Removing large packages"
+  #         ./uninstall_packages.py
+  #         df -h
+  #
+  #     - name: Download all workflow run artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: spack_${{ env.TARGET_TRIPLET }}-locks
+  #
+  #     - run: |
+  #         cp Dockerfile.* Dockerfile
+  #
+  #     - uses: docker/login-action@v3
+  #       if: "inputs.image != '' && !cancelled()"
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #
+  #     - name: Docker meta
+  #       if: "inputs.image != '' && !cancelled()"
+  #       uses: docker/metadata-action@v5
+  #       id: meta
+  #       with:
+  #         # list of Docker images to use as base name for tags
+  #         images: |
+  #           ghcr.io/${{ github.repository_owner  }}/spack-container
+  #         # generate Docker tags based on the following events/attributesk
+  #         tags: |
+  #           type=schedule
+  #           type=ref,event=branch
+  #           type=ref,event=pr
+  #           type=semver,pattern={{version}}_${{ env.TARGET_TRIPLET_SLUG }}
+  #           type=semver,pattern={{major}}.{{minor}}_${{ env.TARGET_TRIPLET_SLUG }}
+  #           type=semver,pattern={{major}}_${{ env.TARGET_TRIPLET_SLUG }}
+  #
+  #     - name: Build and push
+  #       if: "inputs.image != '' && !cancelled()"
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         # Push only on tags
+  #         push: ${{ startsWith(github.ref, 'refs/tags/') }}
+  #         context: .
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         labels: ${{ steps.meta.outputs.labels }}
