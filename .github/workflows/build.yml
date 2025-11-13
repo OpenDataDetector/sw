@@ -54,7 +54,6 @@ jobs:
             -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
             -e "GITHUB_ENV=/github_env" \
             -e "GITHUB_ACTIONS=${GITHUB_ACTIONS}" \
-            -w /build \
             ${{ env.IMAGE }} \
             /src/ci/spack_build.sh
 
@@ -104,7 +103,6 @@ jobs:
             -e "GH_OCI_USER=${{ github.actor }}" \
             -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
             -e "BASE_IMAGE=${{ env.IMAGE }}" \
-            -w /build \
             ${{ env.IMAGE }} \
             /src/ci/spack_push.sh
 
