@@ -67,6 +67,9 @@ spack:
       access_pair:
         id_variable: GH_OCI_USER
         secret_variable: GH_OCI_TOKEN
+    acts-spack-buildcache:
+      url: oci://ghcr.io/acts-project/spack-buildcache
+      signed: false
 
   config:
     template_dirs:
