@@ -14,7 +14,7 @@ on:
 jobs:
 
   build:
-    runs-on: "${{ inputs.os }}"
+    runs-on: ubuntu-latest
 
     env:
       IMAGE: "ghcr.io/acts-project/ubuntu2404:82"
