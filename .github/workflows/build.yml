@@ -43,6 +43,7 @@ jobs:
           mkdir build
           docker run \
             -v"$PWD:/src" \
+            -w/src \
             -v"$(spack location -r):/spack" \
             -v"$PWD/build:/build" \
             -v "$GITHUB_ENV:/github_env"\
@@ -95,6 +96,7 @@ jobs:
         run: |
           docker run \
             -v"$PWD:/src" \
+            -w/src \
             -v"$(spack location -r):/spack" \
             -v"$PWD/build:/build" \
             -e "SPACK_ROOT=/spack" \
