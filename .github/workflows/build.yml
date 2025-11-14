@@ -15,6 +15,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     env:
       IMAGE: "ghcr.io/acts-project/ubuntu2404:82"
