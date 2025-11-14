@@ -5,53 +5,53 @@
 spack:
   # add package specs to the `specs` list
   specs: 
-    # - |
-    #    acts@main
-    #      +dd4hep 
-    #      +geant4 
-    #      +tgeo 
-    #      +hepmc3 
-    #      +pythia8 
-    #      +edm4hep 
-    #      +podio 
-    #      +examples 
-    #      +python 
-    #      +json
-    #      +fatras
+    - |
+       acts@main
+         +dd4hep 
+         +geant4 
+         +tgeo 
+         +hepmc3 
+         +pythia8 
+         +edm4hep 
+         +podio 
+         +examples 
+         +python 
+         +json
+         +fatras
 
-    # - boost@1.88.0 +program_options +test +json +graph +filesystem
-    # - cmake@3.31.9
-    # - edm4hep@0.99.2
-    # - eigen@3.4.0
-    # - intel-tbb@2022.0.0
-    # - nlohmann-json@3.11.3
-    # - podio@1.3
-    # - root@6.36.02 -aqua -opengl
-    # - |
-    #   colliderml.dd4hep@git.a3fdbc4302494ee6dad3e3da460ec42b2b61c99f=master
-    #     +xercesc +edm4hep +hepmc3
-    # - geomodel@6.19.0 +geomodelg4
-    # - python@3.14
-    # - py-pybind11 @3.0.0
-    # - py-pip
-    # - py-jinja2 # for edm4hep + podio
-    # - py-pyyaml # for edm4hep + podio
-    #
-    # - hepmc3@3.3.0 +rootio
-    #
-    # # compression libraries that can be used by hepmc3 if configured
-    # - zstd
-    # - lz4
+    - boost@1.88.0 +program_options +test +json +graph +filesystem
+    - cmake@3.31.9
+    - edm4hep@0.99.2
+    - eigen@3.4.0
+    - intel-tbb@2022.0.0
+    - nlohmann-json@3.11.3
+    - podio@1.3
+    - root@6.36.02 -aqua -opengl
+    - |
+      colliderml.dd4hep@git.a3fdbc4302494ee6dad3e3da460ec42b2b61c99f=master
+        +xercesc +edm4hep +hepmc3
+    - geomodel@6.19.0 +geomodelg4
+    - python@3.14
+    - py-pybind11 @3.0.0
+    - py-pip
+    - py-jinja2 # for edm4hep + podio
+    - py-pyyaml # for edm4hep + podio
+
+    - hepmc3@3.3.0 +rootio
+
+    # compression libraries that can be used by hepmc3 if configured
+    - zstd
+    - lz4
     - zlib-ng
-    # - bzip2
-    #
-    # - pythia8@8.313 +hepmc +hepmc3 +lhapdf +gzip
-    # - geant4@11.3.2 -data
-    # # - geant4-data
-    # - fastjet@3.5.0 plugins=cxx
-    #
-    # - madgraph5amc@3.5.9 +ninja +collier +pythia8
-    # - colliderml.lhapdfsets sets=MMHT2014lo68cl,MMHT2014nlo68cl,CT14lo,CT14nlo,NNPDF23_nlo_as_0119_qed
+    - bzip2
+
+    - pythia8@8.313 +hepmc +hepmc3 +lhapdf +gzip
+    - geant4@11.3.2 -data
+    # - geant4-data
+    - fastjet@3.5.0 plugins=cxx
+
+    - madgraph5amc@3.5.9 +ninja +collier +pythia8
+    - colliderml.lhapdfsets sets=MMHT2014lo68cl,MMHT2014nlo68cl,CT14lo,CT14nlo,NNPDF23_nlo_as_0119_qed
 
   view: true
   concretizer:

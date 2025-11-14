@@ -93,18 +93,6 @@ jobs:
       #       Dockerfile.*
       #       spack_*.lock
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: |
-          docker pull ghcr.io/acts-project/ubuntu2404:82
-          docker tag ghcr.io/acts-project/ubuntu2404:82 ghcr.io/opendatadetector/sw:dummy
-          docker push ghcr.io/opendatadetector/sw:dummy
-          
 
       - name: Push spack cache (container)
         if: "!cancelled()"
