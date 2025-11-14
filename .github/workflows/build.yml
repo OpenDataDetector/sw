@@ -97,6 +97,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - run: |
+          docker pull ghcr.io/acts-project/ubuntu2404:82
+          docker tag ghcr.io/acts-project/ubuntu2404:82 ghcr.io/opendatadetector/sw:dummy
+          docker push ghcr.io/opendatadetector/sw:dummy
+          
+
       - name: Push spack cache (container)
         if: "!cancelled()"
         run: |
