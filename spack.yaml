@@ -19,10 +19,10 @@ spack:
     #      +json
     #      +fatras
 
-    - boost@1.88.0 +program_options +test +json +graph +filesystem
+    # - boost@1.88.0 +program_options +test +json +graph +filesystem
     # - cmake@3.31.9
     # - edm4hep@0.99.2
-    # - eigen@3.4.0
+    - eigen@3.4.0
     # - intel-tbb@2022.0.0
     # - nlohmann-json@3.11.3
     # - podio@1.3
