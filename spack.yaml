@@ -62,7 +62,7 @@ spack:
 
   mirrors:
     cache:
-      url: oci://ghcr.io/OpenDataDetector/sw
+      url: oci://ghcr.io/opendatadetector/sw
       signed: false
       access_pair:
         id_variable: GH_OCI_USER
