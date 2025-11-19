@@ -61,8 +61,11 @@ set -eux
 {{ preparation_script }}
 EOT
 
-RUN curl -LsSf https://astral.sh/uv/0.6.14/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/0.9.10/install.sh | sh
 ENV PATH=/root/.local/bin:$PATH
+
+COPY docker/download_geant4_datasets.sh /usr/local/bin
+COPY docker/download_geant4_datasets.py /usr/local/bin/_download_geant4_datasets.py
 
 ENV CCACHE_DIR=/ccache
 RUN mkdir /ccache
@@ -74,10 +77,6 @@ set -o pipefail
 base_dir=$(dirname $(find /spack -type d -name "root-*"))
 
 echo "BASE_DIR=\$base_dir" >> ~/.bashrc
-
-{% set python = specs["python"] -%}
-{% set python_exe = "\\$base_dir/"+python.name+"-"+python.version+"-"+python.hash+"/bin/python3" -%}
-uv pip install --python={{ python_exe }} --system pyyaml jinja2
 
 {% set geant4 = specs["geant4"] -%}
 {% set geant4_dir = "\\$base_dir/"+geant4.name+"-"+geant4.version+"-"+geant4.hash+"/share/Geant4/data" -%}
@@ -118,17 +117,9 @@ EOF
 
 
 RUN cat <<EOF >> /etc/motd
-=============== ACTS development image with dependencies ===============
-- Clone repository: 
-    git clone https://github.com/acts-project/acts.git --recursive
-- Configure: 
-    cmake -S acts -B build -GNinja --preset dev \\
-      -DACTS_BUILD_UNITTESTS=OFF -DACTS_BUILD_INTEGRATIONTESTS=OFF
-- Build:
-    cmake --build build
-- Run:
-    source build/this_acts_withdeps.sh
-    acts/Examples/Scripts/Python/full_chain_odd.py -n1
+==================== ColliderML Software Environment ===================
+Download Geant4 datasets: 
+$ download_geant4_datasets.sh
 ========================================================================
 EOF
 

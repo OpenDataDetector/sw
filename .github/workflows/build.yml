@@ -15,6 +15,12 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+
+    outputs:
+      target_arch: ${{ steps.lockfile_bookkeeping.outputs.TARGET_ARCH }}
+      target_triplet: ${{ steps.lockfile_bookkeeping.outputs.TARGET_TRIPLET }}
+      target_triplet_slug: ${{ steps.lockfile_bookkeeping.outputs.TARGET_TRIPLET_SLUG }}
+
     permissions:
       contents: read
       packages: write
@@ -37,9 +43,9 @@ jobs:
           echo "Removing large packages"
           ci/uninstall_packages.py
           df -h
-      #
-      # - name: Install the latest version of uv
-      #   uses: astral-sh/setup-uv@v5
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Run spack build (container)
         run: |
@@ -61,19 +67,34 @@ jobs:
             /src/ci/spack_build.sh
 
 
+
+      - name: Lockfile bookkeeping
+        shell: bash
+        if: always()
+        id: lockfile_bookkeeping
+        run: |
+          cp build/spack.lock "spack_${TARGET_TRIPLET}.lock"
+          if [[ "${{ inputs.default }}" == "true" ]]; then
+            # this will be become the default combination for this architecture
+            cp build/spack.lock "spack_${TARGET_ARCH}.lock"
+          fi
+          echo "TARGET_TRIPLET=${TARGET_TRIPLET}" >> "$GITHUB_OUTPUT"
+          echo "TARGET_ARCH=${TARGET_ARCH}" >> "$GITHUB_OUTPUT"
+          echo "TARGET_TRIPLET_SLUG=${TARGET_TRIPLET}" | sed 's/@/-/g' >> "$GITHUB_OUTPUT"
+
       - name: Print base image
         shell: bash
         if: "!cancelled()"
         run: |
           echo "BASE IMAGE: ${BASE_IMAGE}"
 
-      # - name: Create Dockerfile from spack lockfile
-      #   if: "inputs.image != '' && !cancelled()"
-      #   run: |
-      #     uv run lockfile_to_docker.py \
-      #       "spack_${TARGET_TRIPLET}.lock" \
-      #       --base-image ${BASE_IMAGE} \
-      #       -o Dockerfile.${TARGET_TRIPLET}
+      - name: Create Dockerfile from spack lockfile
+        if: "inputs.image != '' && !cancelled()"
+        run: |
+          uv run lockfile_to_docker.py \
+            "spack_${TARGET_TRIPLET}.lock" \
+            --base-image ${BASE_IMAGE} \
+            -o Dockerfile.${TARGET_TRIPLET}
 
       - name: Upload lock files and Dockerfiles
         uses: actions/upload-artifact@v4
@@ -81,7 +102,8 @@ jobs:
         with:
           name: spack_${{ env.TARGET_TRIPLET }}-locks
           path: |
-            spack*.lock
+            spack_*.lock
+            Dockerfile.*
           if-no-files-found: error
 
       # - name: Add lock files and Dockerfiles to release
