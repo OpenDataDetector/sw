@@ -81,8 +81,7 @@ jobs:
         with:
           name: spack_${{ env.TARGET_TRIPLET }}-locks
           path: |
-            spack_*.lock
-            Dockerfile.*
+            spack*.lock
           if-no-files-found: error
 
       # - name: Add lock files and Dockerfiles to release
