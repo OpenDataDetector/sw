@@ -17,10 +17,6 @@ jobs:
       target_triplet: ${{ steps.lockfile_bookkeeping.outputs.TARGET_TRIPLET }}
       target_triplet_slug: ${{ steps.lockfile_bookkeeping.outputs.TARGET_TRIPLET_SLUG }}
 
-    permissions:
-      contents: read
-      packages: write
-
     env:
       IMAGE: "ghcr.io/acts-project/ubuntu2404:82"
       COMPILER: "gcc@13.3.0"

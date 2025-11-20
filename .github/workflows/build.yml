@@ -13,6 +13,11 @@ on:
 
 jobs:
   build_container:
+
+    permissions:
+      contents: read
+      packages: write
+
     strategy:
       fail-fast: false
       matrix:
