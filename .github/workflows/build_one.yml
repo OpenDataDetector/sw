@@ -10,7 +10,7 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.os }}
 
     outputs:
       target_arch: ${{ steps.lockfile_bookkeeping.outputs.TARGET_ARCH }}
