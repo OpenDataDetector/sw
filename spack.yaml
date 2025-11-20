@@ -71,13 +71,3 @@ spack:
       url: oci://ghcr.io/acts-project/spack-buildcache
       signed: false
 
-  config:
-    template_dirs:
-      - .
-
-  container:
-    images:
-      os: "ubuntu:24.04"
-      spack: develop
-    format: docker
-    template: Dockerfile.jinja2

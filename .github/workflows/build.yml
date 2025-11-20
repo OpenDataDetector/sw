@@ -89,7 +89,7 @@ jobs:
           echo "BASE IMAGE: ${BASE_IMAGE}"
 
       - name: Create Dockerfile from spack lockfile
-        if: "inputs.image != '' && !cancelled()"
+        if: "!cancelled()"
         run: |
           uv run lockfile_to_docker.py \
             "spack_${TARGET_TRIPLET}.lock" \
