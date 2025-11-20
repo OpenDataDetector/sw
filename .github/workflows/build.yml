@@ -73,10 +73,10 @@ jobs:
         if: always()
         id: lockfile_bookkeeping
         run: |
-          cp build/spack.lock "spack_${TARGET_TRIPLET}.lock"
+          cp spack.lock "spack_${TARGET_TRIPLET}.lock"
           if [[ "${{ inputs.default }}" == "true" ]]; then
             # this will be become the default combination for this architecture
-            cp build/spack.lock "spack_${TARGET_ARCH}.lock"
+            cp spack.lock "spack_${TARGET_ARCH}.lock"
           fi
           echo "TARGET_TRIPLET=${TARGET_TRIPLET}" >> "$GITHUB_OUTPUT"
           echo "TARGET_ARCH=${TARGET_ARCH}" >> "$GITHUB_OUTPUT"
