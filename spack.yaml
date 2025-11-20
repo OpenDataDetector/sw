@@ -57,6 +57,13 @@ spack:
   concretizer:
     unify: true
 
+  packages:
+    all:
+      target:
+      - aarch64
+      - x86_64
+      variants: cxxstd=20 build_type=Release
+
   repos:
     colliderml: spack_repo/colliderml
 
