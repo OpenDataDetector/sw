@@ -21,7 +21,7 @@ jobs:
           - os: ubuntu-latest
           - os: ubuntu-24.04-arm
 
-    uses: ./.github/workflows/spack.yml
+    uses: ./.github/workflows/build_one.yml
     with:
       os: ${{ matrix.os }}
 
