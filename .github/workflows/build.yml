@@ -82,18 +82,13 @@ jobs:
           echo "TARGET_ARCH=${TARGET_ARCH}" >> "$GITHUB_OUTPUT"
           echo "TARGET_TRIPLET_SLUG=${TARGET_TRIPLET}" | sed 's/@/-/g' >> "$GITHUB_OUTPUT"
 
-      - name: Print base image
-        shell: bash
-        if: "!cancelled()"
-        run: |
-          echo "BASE IMAGE: ${BASE_IMAGE}"
 
       - name: Create Dockerfile from spack lockfile
         if: "!cancelled()"
         run: |
           uv run lockfile_to_docker.py \
             "spack_${TARGET_TRIPLET}.lock" \
-            --base-image ${BASE_IMAGE} \
+            --base-image ${{ env.IMAGE }} \
             -o Dockerfile.${TARGET_TRIPLET}
 
       - name: Upload lock files and Dockerfiles
