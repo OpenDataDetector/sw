@@ -80,6 +80,7 @@ jobs:
           uv run lockfile_to_docker.py \
             "spack_${TARGET_TRIPLET}.lock" \
             --base-image ${{ env.IMAGE }} \
+            --oci-url ghcr.io/opendatadetector/sw \
             -o Dockerfile.${TARGET_TRIPLET}
 
       - name: Upload lock files and Dockerfiles
