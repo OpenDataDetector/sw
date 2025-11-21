@@ -15,7 +15,7 @@ jobs:
   build_container:
 
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     strategy:
