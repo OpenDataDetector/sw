@@ -136,7 +136,7 @@ jobs:
           df -h
           sudo apt-get update
           echo "Removing large packages"
-          ./uninstall_packages.py
+          ci/uninstall_packages.py
           df -h
 
       - name: Download all workflow run artifacts
