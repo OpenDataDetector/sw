@@ -25,7 +25,7 @@ spack:
     - eigen@3.4.0
     - intel-tbb@2022.0.0
     - nlohmann-json@3.11.3
-    - podio@1.6
+    - podio@1.4 # held back by -> / . change not available in custom dd4hep
     - root@6.38.00 -aqua -opengl
     - |
       colliderml.dd4hep@git.a3fdbc4302494ee6dad3e3da460ec42b2b61c99f=master
