@@ -64,7 +64,7 @@ jobs:
             ".*ubuntu24.04.*gcc.*" \
             --push \
             --registry ghcr.io/opendatadetector/sw \
-            --summary-file release_summary.md
+            --summary release_summary.md
 
       - name: Add lock files and Dockerfiles to release
         uses: softprops/action-gh-release@v2
