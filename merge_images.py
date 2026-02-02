@@ -8,7 +8,8 @@
 # ///
 
 import typer
-from typing import Annotated
+from typing import Annotated, Optional
+from pathlib import Path
 import subprocess
 import json
 import re
@@ -46,6 +47,7 @@ def main(
     pattern: str,
     registry: str = "ghcr.io/acts-project/spack-container",
     do_push: Annotated[bool, typer.Option("--push/--no-push")] = False,
+    summary_file: Annotated[Optional[Path], typer.Option("--summary")] = None,
 ):
     console = Console()
 
@@ -79,6 +81,11 @@ def main(
     if do_push:
         console.print("[b]Pushing manifest[/b]")
         push(output_manifest)
+
+    if summary_file:
+        summary = f"- `{output_manifest}`\n"
+        summary_file.write_text(summary)
+        console.print(f"Summary written to [b]{summary_file}[/b]")
 
     console.print("[bold green]DONE![/bold green]")
 

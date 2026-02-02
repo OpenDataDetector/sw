@@ -55,7 +55,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build merged manifest and push to regisrty
+      - name: Build merged manifest and push to registry
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -63,4 +63,12 @@ jobs:
             ${{ github.ref_name }} \
             ".*ubuntu24.04.*gcc.*" \
             --push \
-            --registry ghcr.io/opendatadetector/sw
+            --registry ghcr.io/opendatadetector/sw \
+            --summary-file release_summary.md
+
+      - name: Add lock files and Dockerfiles to release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body_path: release_summary.md
+          append_body: true
