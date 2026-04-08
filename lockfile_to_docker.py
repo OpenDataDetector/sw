@@ -114,7 +114,40 @@ cat /etc/motd
 
 EOF
 
+{% set python_spec = specs["python"] -%}
+# pyedm4hep + postprocessing packages into spack's Python.
+RUN <<PYINST bash
+set -eux
+base_dir=$(dirname $(find /spack -type d -name "root-*"))
+uv pip install \
+    --python "\$base_dir/{{ python_spec.name }}-{{ python_spec.version }}-{{ python_spec.hash }}/bin/python3" \
+    --break-system-packages \
+    pyedm4hep pyarrow uproot pandas awkward h5py tqdm pyhepmc psutil polars
+PYINST
 
+# Build ODD v4.0.4 (ACTS +odd variant conflicts with @main at @44.2.0:).
+RUN <<EOT bash
+set -eux
+base_dir=$(dirname $(find /spack -type d -name "root-*"))
+
+for dir in \$base_dir/*/; do
+    [ -d "\$dir" ] || continue
+    CMAKE_PREFIX_PATH="\${dir%/}\${CMAKE_PREFIX_PATH:+:\${CMAKE_PREFIX_PATH}}"
+    [ -d "\${dir}lib" ] && LD_LIBRARY_PATH="\${dir}lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
+done
+export CMAKE_PREFIX_PATH LD_LIBRARY_PATH
+
+git clone --depth 1 --branch v4.0.4 \
+    https://gitlab.cern.ch/acts/OpenDataDetector.git /opt/odd
+mkdir /tmp/odd-build && cd /tmp/odd-build
+cmake /opt/odd -DCMAKE_INSTALL_PREFIX=/opt/odd-install
+make -j$(nproc) && make install
+rm -rf /tmp/odd-build
+
+echo 'export ODD_PATH=/opt/odd' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=/opt/odd-install/lib:\${LD_LIBRARY_PATH}' >> ~/.bashrc
+
+EOT
 
 RUN cat <<EOF >> /etc/motd
 ==================== ColliderML Software Environment ===================
@@ -282,7 +315,9 @@ def main(
     apt-get update
     apt-get install -y \\
       ninja-build \\
-      ccache
+      ccache \\
+      bc \\
+      wget
     fi
 fi"""
 
