@@ -14,6 +14,9 @@ import os
 
 # Inherit everything from builtin.madgraph5amc, but add additional versions
 class Madgraph5amc(Madgraph5amcBase):
+    # MG5's `install mg5amc_py8_interface` calls `wget` unconditionally.
+    depends_on("wget", type="build", when="+pythia8")
+
     def install(self, spec, prefix):
         def installdir(dirname):
             install_tree(dirname, join_path(prefix, dirname))
