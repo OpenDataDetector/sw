@@ -125,7 +125,13 @@ uv pip install \
     pyedm4hep pyarrow uproot pandas awkward h5py tqdm pyhepmc psutil polars
 PYINST
 
-# Build ODD v4.0.4 (ACTS +odd variant conflicts with @main at @44.2.0:).
+# Build ODD v6.0.2 (ACTS +odd variant conflicts with @main at @44.2.0:).
+# v6.0.2 is the latest ODD tag and is geometry-identical to v5.0.0 — the tag the
+# released ColliderML dataset was generated with — verified by calo geometry
+# (ECal/HCal inner radii 316.8 / 362.5 mm + cell pitch) and tracker barrel layer
+# radii, so it reproduces the dataset while staying on the current release. ODD
+# ships its material map + b-field via Git LFS, so we `git lfs pull` after
+# cloning (git-lfs is in the spack env on PATH here).
 RUN <<EOT bash
 set -eux
 base_dir=$(dirname $(find /spack -type d -name "root-*"))
@@ -137,8 +143,9 @@ for dir in \$base_dir/*/; do
 done
 export CMAKE_PREFIX_PATH LD_LIBRARY_PATH
 
-git clone --depth 1 --branch v4.0.4 \
+git clone --depth 1 --branch v6.0.2 \
     https://gitlab.cern.ch/acts/OpenDataDetector.git /opt/odd
+( cd /opt/odd && git lfs install --local && git lfs pull )
 mkdir /tmp/odd-build && cd /tmp/odd-build
 cmake /opt/odd -DCMAKE_INSTALL_PREFIX=/opt/odd-install
 make -j$(nproc) && make install
