@@ -50,11 +50,11 @@ class Acts(CMakePackage, CudaPackage):
 
     # Supported Acts versions
     version("main", branch="main")
-    # ColliderML fork: Paul Gessinger's Arrow/Parquet writers
-    # (feat/calo-hit-conversion) + measurementIDs ROOT branch + the
-    # hit_outlier/num_measurements track-schema additions. Builds the native
-    # parquet output the ColliderML pipeline ships. Drop once the upstream
-    # Arrow PRs (acts-project/acts#5410, #5441) merge into main.
+    # ColliderML fork: Paul Gessinger's Arrow/Parquet writers (acts#5410, now
+    # merged upstream) + the v2 "one row per measurement" tracker-hits schema
+    # (measurement-row hits with nested per-measurement truth; track hit_ids =
+    # measurement indices; num_measurements dropped). Drop once the schema
+    # additions are upstreamed.
     #
     # The branch is based on current acts main (post-44.4.0). We label it with a
     # high 44.x number rather than a name so spack's version-gated logic
@@ -62,7 +62,7 @@ class Acts(CMakePackage, CudaPackage):
     version(
         "44.99.99-colliderml-arrow",
         git="https://github.com/murnanedaniel/acts.git",
-        branch="feat/colliderml-arrow-tracks",
+        branch="feat/colliderml-arrow-measurements",
     )
     version("44.4.0", commit="a05c35a14b39a461925d11de12ccd2da5e38b3d1")
     version("44.3.0", commit="d4c630145d5050dd2edc58f1de0c872caff23dd8")
