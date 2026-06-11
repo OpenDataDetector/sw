@@ -50,6 +50,20 @@ class Acts(CMakePackage, CudaPackage):
 
     # Supported Acts versions
     version("main", branch="main")
+    # ColliderML fork: Paul Gessinger's Arrow/Parquet writers
+    # (feat/calo-hit-conversion) + measurementIDs ROOT branch + the
+    # hit_outlier/num_measurements track-schema additions. Builds the native
+    # parquet output the ColliderML pipeline ships. Drop once the upstream
+    # Arrow PRs (acts-project/acts#5410, #5441) merge into main.
+    #
+    # The branch is based on current acts main (post-44.4.0). We label it with a
+    # high 44.x number rather than a name so spack's version-gated logic
+    # (@44:, @44.2.0:, etc.) evaluates exactly as it does for `main`.
+    version(
+        "44.99.99-colliderml-arrow",
+        git="https://github.com/murnanedaniel/acts.git",
+        branch="feat/colliderml-arrow-tracks",
+    )
     version("44.4.0", commit="a05c35a14b39a461925d11de12ccd2da5e38b3d1")
     version("44.3.0", commit="d4c630145d5050dd2edc58f1de0c872caff23dd8")
     version("44.2.0", commit="c3d440eb1e441fcd15995b8af87ea1497e0cc126")
@@ -287,6 +301,17 @@ class Acts(CMakePackage, CudaPackage):
         when="@:16",
     )
     variant("edm4hep", default=False, description="Build EDM4hep plugin", when="@25:")
+    variant(
+        "arrow",
+        default=False,
+        description="Build the Apache Arrow plugin (native Parquet output)",
+    )
+    variant(
+        "examples_parquet",
+        default=False,
+        description="Build the Arrow/Parquet example I/O (converters + ParquetWriter)",
+        when="+arrow +examples",
+    )
     variant("gnn", default=False, description="Build the GNN plugin", when="@44:")
     variant(
         "fatras",
@@ -465,6 +490,21 @@ class Acts(CMakePackage, CudaPackage):
     # TODO: Clarify version on next release
     depends_on("podio @:1.4.1", when="@:44.1.0")
     depends_on("pythia8", when="+pythia8")
+    # Apache Arrow C++ for the native Parquet output plugin (shared libs;
+    # ACTS_ARROW_ISOLATED=OFF links against this rather than vendoring).
+    # ACTS pins find_package(Arrow 23.0.0) with SameMajorVersion compatibility,
+    # so the major must be 23. Spack's newest is 23.0.1 (== our validated overlay).
+    # The Examples ParquetWriter defaults to zstd compression, but the spack
+    # arrow package defaults all codecs OFF -> finalize fails with "Support for
+    # codec 'zstd' not built". Enable zstd (the writer's codec) + zlib (gzip).
+    # We deliberately do NOT enable +lz4: arrow's Findlz4Alt.cmake fails to
+    # resolve LZ4_LIB against spack's makefile-built lz4 ("Could NOT find
+    # lz4Alt"). snappy/brotli/bz2 are unnecessary (the writer only uses zstd;
+    # pyarrow readers bundle every codec regardless of what arrow links).
+    depends_on(
+        "arrow@23 +parquet +dataset +compute +zstd +zlib",
+        when="+arrow",
+    )
     depends_on("python", when="+python")
     depends_on("python@3.8:", when="+python @19.11:19")
     depends_on("python@3.8:", when="+python @21:")
@@ -566,6 +606,8 @@ class Acts(CMakePackage, CudaPackage):
         args = [
             cmake_variant("ALIGNMENT", "alignment"),
             cmake_variant("ANALYSIS_APPS", "analysis"),
+            plugin_cmake_variant("ARROW", "arrow"),
+            self.define_from_variant("ACTS_BUILD_EXAMPLES_PARQUET", "examples_parquet"),
             plugin_cmake_variant("AUTODIFF", "autodiff"),
             cmake_variant("BENCHMARKS", "benchmarks"),
             example_cmake_variant("BINARIES", "binaries"),
@@ -642,6 +684,12 @@ class Acts(CMakePackage, CudaPackage):
                 args.append(f"-DCUDA_FLAGS=-arch=sm_{cuda_arch[0]}")
                 arch_str = ";".join(self.spec.variants["cuda_arch"].value)
                 args.append(self.define("CMAKE_CUDA_ARCHITECTURES", arch_str))
+
+        if spec.satisfies("+arrow"):
+            # Link against the spack-provided shared arrow instead of vendoring a
+            # statically-isolated copy. Matches the validated overlay build; the
+            # isolated path needs static arrow libs we don't ship.
+            args.append(self.define("ACTS_ARROW_ISOLATED", False))
 
         if spec.satisfies("+gnn"):
             args.append(self.define("ACTS_GNN_ENABLE_ONNX", self.spec.satisfies("+onnx")))

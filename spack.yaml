@@ -6,18 +6,20 @@ spack:
   # add package specs to the `specs` list
   specs: 
     - |
-       colliderml.acts@main
-         +dd4hep 
-         +geant4 
-         +root 
-         +hepmc3 
-         +pythia8 
-         +edm4hep 
-         +podio 
-         +examples 
-         +python 
+       colliderml.acts@44.99.99-colliderml-arrow
+         +dd4hep
+         +geant4
+         +root
+         +hepmc3
+         +pythia8
+         +edm4hep
+         +podio
+         +examples
+         +python
          +json
          +fatras
+         +arrow
+         +examples_parquet
 
     - boost@1.88.0 +program_options +test +json +graph +filesystem
     - cmake@3.31.11
