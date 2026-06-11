@@ -26,6 +26,15 @@ jobs:
 
       - name: Set up Spack
         uses: spack/setup-spack@v2
+        with:
+          # Pin spack develop to the last commit for which sw CI was green
+          # (2026-05-07, build of 2026-05-08). Later spack develop introduced
+          # two regressions that break every build: an SBOM post-install hook
+          # that crashes on git-versioned packages (dd4hep), and a buildcache
+          # push that pushes a different concretization than was installed
+          # (hash mismatch -> "package not installed"). Unpin once spack
+          # develop is healthy again.
+          ref: 67df5f93bfb9625dd17d79c4846da0c5868af45a
 
       - name: Remove packages to save disk
         if: startsWith(inputs.os, 'ubuntu')
