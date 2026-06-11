@@ -62,7 +62,7 @@ class Acts(CMakePackage, CudaPackage):
     version(
         "44.99.99-colliderml-arrow",
         git="https://github.com/murnanedaniel/acts.git",
-        branch="feat/colliderml-arrow-measurements",
+        commit="5d3b8f96c9e47ee31a11a22b97d283cfd79a93d4",
     )
     version("44.4.0", commit="a05c35a14b39a461925d11de12ccd2da5e38b3d1")
     version("44.3.0", commit="d4c630145d5050dd2edc58f1de0c872caff23dd8")
