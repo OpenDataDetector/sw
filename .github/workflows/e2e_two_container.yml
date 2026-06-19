@@ -1,0 +1,68 @@
+name: E2E two-container test
+
+# End-to-end test of the sim->reco container handoff: the sim image (spack sw)
+# writes an edm4hep file, the reco image (docker/pandora) reads it and runs
+# Pandora particle flow -> PFOs. This is the one thing the per-image smoke tests
+# can't cover (cross-version podio read, cellID metadata, geometry consistency).
+#
+# It is HEAVY (pulls both ~25 GB images, builds the ODD, runs Geant4 + Pandora),
+# so it never runs per-PR — only on manual dispatch and a nightly cron, and it
+# never gates a merge. Point it at a runner that can hold both images; the default
+# `ubuntu-24.04` will need the disk cleanup below and may still be tight, so use
+# the `runner` input to target a self-hosted / larger runner when available.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sim_image:
+        description: "Sim image ref (spack sw image)"
+        default: "ghcr.io/opendatadetector/sw:main"
+      reco_image:
+        description: "Reco image ref (docker/pandora)"
+        default: "ghcr.io/opendatadetector/sw:pandora"
+      n_events:
+        description: "Number of gun events"
+        default: "2"
+      runner:
+        description: "Runner label (override for a bigger / self-hosted runner)"
+        default: "ubuntu-24.04"
+  schedule:
+    - cron: "40 4 * * *"
+
+jobs:
+  e2e:
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-24.04' }}
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      SIM_IMAGE: ${{ github.event.inputs.sim_image || 'ghcr.io/opendatadetector/sw:main' }}
+      RECO_IMAGE: ${{ github.event.inputs.reco_image || 'ghcr.io/opendatadetector/sw:pandora' }}
+      NEV: ${{ github.event.inputs.n_events || '2' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove packages to save disk
+        run: |
+          df -h
+          ci/uninstall_packages.py || true
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache || true
+          df -h
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull both images
+        run: |
+          docker pull "$SIM_IMAGE"
+          docker pull "$RECO_IMAGE"
+
+      - name: Run end-to-end sim -> reco handoff
+        run: |
+          chmod +x ci/e2e_two_container.sh
+          ci/e2e_two_container.sh "$SIM_IMAGE" "$RECO_IMAGE" "$NEV"
