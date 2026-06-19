@@ -1,15 +1,13 @@
-name: E2E two-container test
+name: Cross-image handoff smoke
 
-# End-to-end test of the sim->reco container handoff: the sim image (spack sw)
-# writes an edm4hep file, the reco image (docker/pandora) reads it and runs
-# Pandora particle flow -> PFOs. This is the one thing the per-image smoke tests
-# can't cover (cross-version podio read, cellID metadata, geometry consistency).
+# THIN check: a podio/edm4hep file written by the sim image is readable by the
+# reco image's (different) podio build. Guards the cross-version read that bit us
+# (bad_function_call on readEntry). It is NOT the pipeline e2e — the real
+# charged-PF two-container test lives in the ColliderML-Production repo, which
+# owns the digi_and_reco / pandora_reco stages.
 #
-# It is HEAVY (pulls both ~25 GB images, builds the ODD, runs Geant4 + Pandora),
-# so it never runs per-PR — only on manual dispatch and a nightly cron, and it
-# never gates a merge. Point it at a runner that can hold both images; the default
-# `ubuntu-24.04` will need the disk cleanup below and may still be tight, so use
-# the `runner` input to target a self-hosted / larger runner when available.
+# Lighter than a full pipeline run but still pulls both images, so it is
+# dispatch + nightly only, never per-PR.
 
 on:
   workflow_dispatch:
@@ -30,17 +28,15 @@ on:
     - cron: "40 4 * * *"
 
 jobs:
-  e2e:
+  handoff:
     runs-on: ${{ github.event.inputs.runner || 'ubuntu-24.04' }}
     permissions:
       contents: read
       packages: read
-
     env:
       SIM_IMAGE: ${{ github.event.inputs.sim_image || 'ghcr.io/opendatadetector/sw:main' }}
       RECO_IMAGE: ${{ github.event.inputs.reco_image || 'ghcr.io/opendatadetector/sw:pandora' }}
       NEV: ${{ github.event.inputs.n_events || '2' }}
-
     steps:
       - uses: actions/checkout@v4
 
@@ -62,7 +58,7 @@ jobs:
           docker pull "$SIM_IMAGE"
           docker pull "$RECO_IMAGE"
 
-      - name: Run end-to-end sim -> reco handoff
+      - name: Cross-image handoff smoke
         run: |
-          chmod +x ci/e2e_two_container.sh
-          ci/e2e_two_container.sh "$SIM_IMAGE" "$RECO_IMAGE" "$NEV"
+          chmod +x ci/handoff_smoke.sh
+          ci/handoff_smoke.sh "$SIM_IMAGE" "$RECO_IMAGE" "$NEV"
