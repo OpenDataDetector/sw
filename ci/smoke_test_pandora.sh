@@ -53,7 +53,7 @@ echo "::group::Pandora particle flow (calo-only)"
 export K4ODD_TRACK_COLLECTION=EmptyTracks
 export K4ODD_PANDORA_SETTINGS=/opt/k4ODD/k4ODD/options/PandoraSettingsMinimal.xml
 k4run /opt/k4ODD/k4ODD/options/ODDreconstruction.py \
-  --inputFile "$WORK/sim.root" --outputFile "$WORK/reco.root" --events 2
+  --inputFile "$WORK/sim.root" --outputFile "$WORK/reco.root" --num-events 2
 echo "::endgroup::"
 
 echo "::group::assert PFO collections"
