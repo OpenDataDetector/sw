@@ -70,7 +70,13 @@ start_section "Select compiler and cxxstd"
 spack -e . compiler list
 echo "Looking for compiler: $COMPILER"
 spack -e . compiler list | grep "$COMPILER"
-spack -e . config add "packages:all:require: [\"%$COMPILER\", \"cxxstd=$CXXSTD\"]"
+# Scope the compiler requirement to the language virtuals (c/cxx/fortran)
+# rather than `packages:all`, which Spack warns can cause concretization
+# errors. The cxxstd requirement still applies to all packages.
+spack -e . config add "packages:all:require:[\"cxxstd=$CXXSTD\"]"
+for _lang in c cxx fortran; do
+  spack -e . config add "packages:${_lang}:require:[\"%$COMPILER\"]"
+done
 end_section
 
 start_section "Concretize"
