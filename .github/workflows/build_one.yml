@@ -6,29 +6,60 @@ on:
       os:
         required: true
         type: string
+      image:
+        required: false
+        type: string
+        default: ""
+      compiler:
+        required: false
+        type: string
+        default: ""
+      compiler_path:
+        required: false
+        type: string
+        default: ""
+      cxxstd:
+        required: false
+        type: string
+        default: "20"
+      default:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
 
   build:
-    runs-on: ${{ inputs.os }}
+    name: Spack build (${{ inputs.compiler }})
+    runs-on: "${{ inputs.os }}"
 
     outputs:
       target_arch: ${{ steps.lockfile_bookkeeping.outputs.TARGET_ARCH }}
       target_triplet: ${{ steps.lockfile_bookkeeping.outputs.TARGET_TRIPLET }}
       target_triplet_slug: ${{ steps.lockfile_bookkeeping.outputs.TARGET_TRIPLET_SLUG }}
 
-    env:
-      IMAGE: "ghcr.io/acts-project/ubuntu2404:82"
-      COMPILER: "gcc@13.3.0"
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
 
       - name: Set up Spack
         uses: spack/setup-spack@v2
 
+      - name: Apply spack patches
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -d spack_patches ] && ls spack_patches/*.patch >/dev/null 2>&1; then
+            for f in spack_patches/*.patch; do
+              git -C spack am -3 "$f"
+            done
+          fi
+
       - name: Remove packages to save disk
-        if: startsWith(inputs.os, 'ubuntu')
         run: |
           df -h
           sudo apt-get update
@@ -37,28 +68,25 @@ jobs:
           df -h
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
 
       - name: Run spack build (container)
         run: |
-          mkdir build
           docker run \
             -v"$PWD:/src" \
             -v"$(spack location -r):/spack" \
-            -v"$PWD/build:/build" \
             -v "$GITHUB_ENV:/github_env"\
             -e "SPACK_ROOT=/spack" \
-            -e "COMPILER=${{ env.COMPILER }}" \
-            -e "COMPILER_PATH=" \
+            -e "COMPILER=${{ inputs.compiler }}" \
+            -e "COMPILER_PATH=${{ inputs.compiler_path }}" \
+            -e "CXXSTD=${{ inputs.cxxstd }}" \
             -e "GH_OCI_USER=${{ github.actor }}" \
             -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
             -e "GITHUB_ENV=/github_env" \
             -e "GITHUB_ACTIONS=${GITHUB_ACTIONS}" \
             -w /src \
-            ${{ env.IMAGE }} \
+            ${{ inputs.image }} \
             /src/ci/spack_build.sh
-
-
 
       - name: Lockfile bookkeeping
         shell: bash
@@ -74,17 +102,29 @@ jobs:
           echo "TARGET_ARCH=${TARGET_ARCH}" >> "$GITHUB_OUTPUT"
           echo "TARGET_TRIPLET_SLUG=${TARGET_TRIPLET}" | sed 's/@/-/g' >> "$GITHUB_OUTPUT"
 
+      - name: Derive base image
+        shell: bash
+        if: "!cancelled()"
+        run: |
+          echo BASE_IMAGE="${{ inputs.image }}" >> "$GITHUB_ENV"
+
+      - name: Print base image
+        shell: bash
+        if: "!cancelled()"
+        run: |
+          echo "BASE IMAGE: ${BASE_IMAGE}"
+
       - name: Create Dockerfile from spack lockfile
         if: "!cancelled()"
         run: |
           uv run lockfile_to_docker.py \
             "spack_${TARGET_TRIPLET}.lock" \
-            --base-image ${{ env.IMAGE }} \
+            --base-image ${BASE_IMAGE} \
             --oci-url ghcr.io/opendatadetector/sw \
             -o Dockerfile.${TARGET_TRIPLET}
 
       - name: Upload lock files and Dockerfiles
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: spack_${{ env.TARGET_TRIPLET }}-locks
@@ -107,18 +147,17 @@ jobs:
           docker run \
             -v"$PWD:/src" \
             -v"$(spack location -r):/spack" \
-            -v"$PWD/build:/build" \
             -e "SPACK_ROOT=/spack" \
             -e "GITHUB_ACTIONS=${GITHUB_ACTIONS}" \
             -e "GH_OCI_USER=${{ github.actor }}" \
             -e "GH_OCI_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
-            -e "BASE_IMAGE=${{ env.IMAGE }}" \
+            -e "BASE_IMAGE=${BASE_IMAGE}" \
             -w /src \
-            ${{ env.IMAGE }} \
+            ${{ inputs.image }} \
             /src/ci/spack_push.sh
 
-
   build_docker:
+    name: Build and push Docker image
     runs-on: "${{ inputs.os }}"
     needs: [build]
 
@@ -128,10 +167,9 @@ jobs:
       TARGET_TRIPLET_SLUG: ${{ needs.build.outputs.target_triplet_slug }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Remove packages to save disk
-        if: startsWith(inputs.os, 'ubuntu')
         run: |
           df -h
           sudo apt-get update
@@ -140,7 +178,7 @@ jobs:
           df -h
 
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: spack_${{ env.TARGET_TRIPLET }}-locks
 
@@ -162,7 +200,7 @@ jobs:
           # list of Docker images to use as base name for tags
           images: |
             ghcr.io/${{ github.repository_owner }}/sw
-          # generate Docker tags based on the following events/attributesk
+          # generate Docker tags based on the following events/attributes
           tags: |
             type=schedule
             type=ref,event=branch
@@ -175,8 +213,7 @@ jobs:
         if: "!cancelled()"
         uses: docker/build-push-action@v5
         with:
-          # Push only on tags
-          push: true #${{ startsWith(github.ref, 'refs/tags/') }}
+          push: true
           context: .
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

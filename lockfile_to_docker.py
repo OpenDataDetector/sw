@@ -65,7 +65,7 @@ RUN curl -LsSf https://astral.sh/uv/0.9.10/install.sh | sh
 ENV PATH=/root/.local/bin:$PATH
 
 COPY docker/download_geant4_datasets.sh /usr/local/bin
-COPY docker/download_geant4_datasets.py /usr/local/bin/_download_geant4_datasets.py
+COPY download_geant4_datasets.py /usr/local/bin/_download_geant4_datasets.py
 
 ENV CCACHE_DIR=/ccache
 RUN mkdir /ccache
@@ -77,6 +77,10 @@ set -o pipefail
 base_dir=$(dirname $(find /spack -type d -name "root-*"))
 
 echo "BASE_DIR=\$base_dir" >> ~/.bashrc
+
+{% set python = specs["python"] -%}
+{% set python_exe = "\\$base_dir/"+python.name+"-"+python.version+"-"+python.hash+"/bin/python3" -%}
+uv pip install --python={{ python_exe }} --system pyyaml jinja2
 
 {% set geant4 = specs["geant4"] -%}
 {% set geant4_dir = "\\$base_dir/"+geant4.name+"-"+geant4.version+"-"+geant4.hash+"/share/Geant4/data" -%}
@@ -125,33 +129,9 @@ uv pip install \
     pyedm4hep pyarrow uproot pandas awkward h5py tqdm pyhepmc psutil polars
 PYINST
 
-# Build ODD v4.0.4 (ACTS +odd variant conflicts with @main at @44.2.0:).
-RUN <<EOT bash
-set -eux
-base_dir=$(dirname $(find /spack -type d -name "root-*"))
-
-for dir in \$base_dir/*/; do
-    [ -d "\$dir" ] || continue
-    CMAKE_PREFIX_PATH="\${dir%/}\${CMAKE_PREFIX_PATH:+:\${CMAKE_PREFIX_PATH}}"
-    [ -d "\${dir}lib" ] && LD_LIBRARY_PATH="\${dir}lib\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}"
-done
-export CMAKE_PREFIX_PATH LD_LIBRARY_PATH
-
-git clone --depth 1 --branch v4.0.4 \
-    https://gitlab.cern.ch/acts/OpenDataDetector.git /opt/odd
-mkdir /tmp/odd-build && cd /tmp/odd-build
-cmake /opt/odd -DCMAKE_INSTALL_PREFIX=/opt/odd-install
-make -j$(nproc) && make install
-rm -rf /tmp/odd-build
-
-echo 'export ODD_PATH=/opt/odd' >> ~/.bashrc
-echo 'export LD_LIBRARY_PATH=/opt/odd-install/lib:\${LD_LIBRARY_PATH}' >> ~/.bashrc
-
-EOT
-
 RUN cat <<EOF >> /etc/motd
 ==================== ColliderML Software Environment ===================
-Download Geant4 datasets: 
+Download Geant4 datasets:
 $ download_geant4_datasets.sh
 ========================================================================
 EOF
@@ -220,10 +200,6 @@ class Spec(BaseModel):
             f"{' '*4} ~> [italic]{oci_url}:[/italic][bold]{self.name}[/bold]-[cyan]{self.version}[/cyan]-[bold]{self.hash}[/bold][italic].spack[/italic]",
         )
 
-    # @staticmethod
-    # def from_dict(info: dict[str, Any]) -> "Spec":
-    #     return Spec(name=info["name"], version=info["version"], hash=info["hash"])
-
 
 @app.command()
 def main(
@@ -251,7 +227,7 @@ def main(
         typer.Option(
             help="OCI URL to use. If not provided, will use the default OCI URL"
         ),
-    ] = "ghcr.io/acts-project/spack-buildcache",
+    ] = "ghcr.io/opendatadetector/sw",
     verbose: bool = False,
     flatten: bool = False,
 ):
@@ -301,25 +277,18 @@ def main(
                     console.print(f"~> {full_dep.markup}", highlight=False)
                     assigned_specs.add(dep.hash)
                     block.append(full_dep)
-            console.print()
 
         block.append(spec)
 
         spec_blocks.append(block)
 
+        console.print()
+
     template = Template(DOCKERFILE_TEMPLATE)
 
-    preparation_script = """if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    if [ "$ID" = "ubuntu" ]; then
-    apt-get update
-    apt-get install -y \\
-      ninja-build \\
-      ccache \\
-      bc \\
-      wget
-    fi
-fi"""
+    preparation_script = (
+        Path(__file__).parent / "docker" / "install_packages.sh"
+    ).read_text()
 
     preparation_script = preparation_script.replace("\\", "\\\\").replace("$", r"\$")
 

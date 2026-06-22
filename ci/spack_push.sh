@@ -21,9 +21,10 @@ fi
 source "$SPACK_ROOT"/share/spack/setup-env.sh
 
 echo "+ Pushing to buildcache"
-spack -e . \
+"$SCRIPT_DIR/retry.sh" spack -e . \
   buildcache push \
   --base-image "${BASE_IMAGE}" \
+  --allow-missing \
   --unsigned \
   cache
 
