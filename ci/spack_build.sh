@@ -75,7 +75,9 @@ spack -e . compiler list | grep "$COMPILER"
 # errors. The cxxstd requirement still applies to all packages.
 spack -e . config add "packages:all:require:[\"cxxstd=$CXXSTD\"]"
 for _lang in c cxx fortran; do
-  spack -e . config add "packages:${_lang}:require:[\"%$COMPILER\"]"
+  # Require the provider of each language virtual directly (no leading '%',
+  # which is only valid in a 'packages:all' compiler requirement).
+  spack -e . config add "packages:${_lang}:require:[\"$COMPILER\"]"
 done
 end_section
 
