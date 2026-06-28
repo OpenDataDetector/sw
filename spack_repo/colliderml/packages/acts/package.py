@@ -51,18 +51,24 @@ class Acts(CMakePackage, CudaPackage):
     # Supported Acts versions
     version("main", branch="main")
     # ColliderML fork: Paul Gessinger's Arrow/Parquet writers (acts#5410, now
-    # merged upstream) + the v2 "one row per measurement" tracker-hits schema
-    # (measurement-row hits with nested per-measurement truth; track hit_ids =
-    # measurement indices; num_measurements dropped). Drop once the schema
-    # additions are upstreamed.
+    # merged upstream) + the Release-2 tracker-hits-v2 sim/reco SPLIT schema:
+    # a reco `tracker_hits` table (ArrowMeasurementOutputConverter, one row per
+    # measurement, with truth links) + a truth `tracker_simhits` table (one row
+    # per sim-hit), linked by simhit_ids. This is the `tracker-hits-v2-tables`
+    # branch — it carries ArrowMeasurementOutputConverter, which the earlier
+    # `feat/colliderml-arrow-measurements` commit (5d3b8f96) did NOT, so that
+    # build could only write `tracker_simhits`, never the reco `tracker_hits`.
+    # Drop once the schema additions are upstreamed.
     #
-    # The branch is based on current acts main (post-44.4.0). We label it with a
+    # NOTE: this branch pins find_package(Arrow 21.0.0) (see the arrow depends_on
+    # below), unlike 5d3b8f96 which pinned 23 — it is the exact ACTS the working
+    # acts-arrow:tracker-hits-v2-tables image was built from. We label it with a
     # high 44.x number rather than a name so spack's version-gated logic
     # (@44:, @44.2.0:, etc.) evaluates exactly as it does for `main`.
     version(
         "44.99.99-colliderml-arrow",
         git="https://github.com/murnanedaniel/acts.git",
-        commit="5d3b8f96c9e47ee31a11a22b97d283cfd79a93d4",
+        commit="5c4c1b583ed6e7bf6f7e734a2001fde673ae8b48",
     )
     version("44.4.0", commit="a05c35a14b39a461925d11de12ccd2da5e38b3d1")
     version("44.3.0", commit="d4c630145d5050dd2edc58f1de0c872caff23dd8")
@@ -492,17 +498,18 @@ class Acts(CMakePackage, CudaPackage):
     depends_on("pythia8", when="+pythia8")
     # Apache Arrow C++ for the native Parquet output plugin (shared libs;
     # ACTS_ARROW_ISOLATED=OFF links against this rather than vendoring).
-    # ACTS pins find_package(Arrow 23.0.0) with SameMajorVersion compatibility,
-    # so the major must be 23. Spack's newest is 23.0.1 (== our validated overlay).
-    # The Examples ParquetWriter defaults to zstd compression, but the spack
-    # arrow package defaults all codecs OFF -> finalize fails with "Support for
-    # codec 'zstd' not built". Enable zstd (the writer's codec) + zlib (gzip).
-    # We deliberately do NOT enable +lz4: arrow's Findlz4Alt.cmake fails to
-    # resolve LZ4_LIB against spack's makefile-built lz4 ("Could NOT find
+    # The tracker-hits-v2-tables branch pins find_package(Arrow 21.0.0) with
+    # SameMajorVersion compatibility, so the major must be 21 (spack ships 21.0.0).
+    # This is the Arrow major the working acts-arrow:tracker-hits-v2-tables image
+    # was built against. The Examples ParquetWriter defaults to zstd compression,
+    # but the spack arrow package defaults all codecs OFF -> finalize fails with
+    # "Support for codec 'zstd' not built". Enable zstd (the writer's codec) +
+    # zlib (gzip). We deliberately do NOT enable +lz4: arrow's Findlz4Alt.cmake
+    # fails to resolve LZ4_LIB against spack's makefile-built lz4 ("Could NOT find
     # lz4Alt"). snappy/brotli/bz2 are unnecessary (the writer only uses zstd;
     # pyarrow readers bundle every codec regardless of what arrow links).
     depends_on(
-        "arrow@23 +parquet +dataset +compute +zstd +zlib",
+        "arrow@21 +parquet +dataset +compute +zstd +zlib",
         when="+arrow",
     )
     depends_on("python", when="+python")
