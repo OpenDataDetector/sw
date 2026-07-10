@@ -1,0 +1,64 @@
+name: Cross-image handoff smoke
+
+# THIN check: a podio/edm4hep file written by the sim image is readable by the
+# reco image's (different) podio build. Guards the cross-version read that bit us
+# (bad_function_call on readEntry). It is NOT the pipeline e2e — the real
+# charged-PF two-container test lives in the ColliderML-Production repo, which
+# owns the digi_and_reco / pandora_reco stages.
+#
+# Lighter than a full pipeline run but still pulls both images, so it is
+# dispatch + nightly only, never per-PR.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sim_image:
+        description: "Sim image ref (spack sw image)"
+        default: "ghcr.io/opendatadetector/sw:main"
+      reco_image:
+        description: "Reco image ref (docker/pandora)"
+        default: "ghcr.io/opendatadetector/sw:pandora"
+      n_events:
+        description: "Number of gun events"
+        default: "2"
+      runner:
+        description: "Runner label (override for a bigger / self-hosted runner)"
+        default: "ubuntu-24.04"
+  schedule:
+    - cron: "40 4 * * *"
+
+jobs:
+  handoff:
+    runs-on: ${{ github.event.inputs.runner || 'ubuntu-24.04' }}
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SIM_IMAGE: ${{ github.event.inputs.sim_image || 'ghcr.io/opendatadetector/sw:main' }}
+      RECO_IMAGE: ${{ github.event.inputs.reco_image || 'ghcr.io/opendatadetector/sw:pandora' }}
+      NEV: ${{ github.event.inputs.n_events || '2' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove packages to save disk
+        run: |
+          df -h
+          ci/uninstall_packages.py || true
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache || true
+          df -h
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull both images
+        run: |
+          docker pull "$SIM_IMAGE"
+          docker pull "$RECO_IMAGE"
+
+      - name: Cross-image handoff smoke
+        run: |
+          chmod +x ci/handoff_smoke.sh
+          ci/handoff_smoke.sh "$SIM_IMAGE" "$RECO_IMAGE" "$NEV"
